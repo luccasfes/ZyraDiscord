@@ -29,10 +29,7 @@ client.once('clientReady', () => {
 
 // Evento que escuta todas as mensagens do servidor
 client.on('messageCreate', async (message) => {
-    // Ignora bots
     if (message.author.bot) return;
-
-    // Verifica se o bot foi mencionado de QUALQUER forma
     const botMencionado = message.mentions.users.has(client.user.id);
 
     if (botMencionado) {
@@ -41,18 +38,26 @@ client.on('messageCreate', async (message) => {
         try {
             await message.channel.sendTyping();
 
-            // Limpa o texto (remove a menção da Zyra)
-            const prompt = message.content.replace(/<@(!?)\d+>/g, '').trim();
+            const pergunta = message.content.replace(/<@(!?)\d+>/g, '').trim();
 
-            if (!prompt) {
+            if (!pergunta) {
                 return message.reply("Sim? Estou aqui para guiar sua jornada. O que deseja saber?");
             }
 
-            const result = await model.generateContent(prompt);
-            const response = await result.response;
-            const text = response.text();
+            // Busca histórico filtrando bots e limitando a 20 mensagens
+            const cacheMensagens = await message.channel.messages.fetch({ limit: 20 });
+            const historico = cacheMensagens
+                .filter(msg => !msg.author.bot)
+                .reverse()
+                .map(msg => `${msg.author.username}: ${msg.content}`)
+                .join('\n');
 
-            await message.reply(text);
+            const promptFinal = `Histórico recente do canal:\n${historico}\n\nPergunta de ${message.author.username}: ${pergunta}`;
+
+            const result = await model.generateContent(promptFinal);
+            const response = await result.response;
+
+            await message.reply(response.text());
         } catch (error) {
             console.error("[ERRO NA IA]", error);
             await message.reply("Houve uma interferência mística... tente novamente.");
