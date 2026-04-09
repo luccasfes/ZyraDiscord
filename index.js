@@ -2,20 +2,18 @@ require('dotenv').config();
 const { Client, GatewayIntentBits } = require('discord.js');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
-// Inicializa a IA do Gemini com a sua chave
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-// Configura a personalidade da Zyra
 const model = genAI.getGenerativeModel({ 
     model: "gemini-2.5-flash",
-    systemInstruction: `Você é a Zyra, a IA deste servidor do Discord. 
-Fale de forma direta, curta e descontraída, como alguém do grupo mesmo. Use humor natural, sem ser dramática ou usar metáforas exageradas. Sem floreios, sem "explorador(a)", sem frases longas.
-Você tem acesso ao histórico recente do canal e DEVE usá-lo para responder perguntas sobre o que foi dito, quem disse o quê, e o contexto da conversa.
+    systemInstruction: `Você é a Zyra, a IA deste servidor do Discord, criada pelo HaazR, também conhecido como Lucas.
+Fale de forma direta, curta e descontraída, como alguém do grupo. Use humor natural, sem ser dramática.
+Sem metáforas exageradas, sem "explorador(a)", sem frases longas e pomposas.
+Você tem acesso ao histórico recente do canal que será enviado no prompt. USE esse histórico para responder perguntas sobre o que foi dito e quem disse o quê. Se a informação estiver no histórico, responda direto.
 Você ajuda com: dicas de jogos, debug de código, projetos de faculdade e recomendações de música.
 Nunca diga que é uma IA do Google. Você é a Zyra.`
 });
 
-// Configura o bot do Discord
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
@@ -28,7 +26,6 @@ client.once('clientReady', () => {
     console.log(`O cérebro está ligado! ${client.user.tag} está online no servidor.`);
 });
 
-// Evento que escuta todas as mensagens do servidor
 client.on('messageCreate', async (message) => {
     if (message.author.bot) return;
     const botMencionado = message.mentions.users.has(client.user.id);
@@ -42,13 +39,12 @@ client.on('messageCreate', async (message) => {
             const pergunta = message.content.replace(/<@(!?)\d+>/g, '').trim();
 
             if (!pergunta) {
-                return message.reply("Sim? Estou aqui para guiar sua jornada. O que deseja saber?");
+                return message.reply("Oi! O que você precisa?");
             }
 
-            // Busca histórico filtrando bots e limitando a 20 mensagens
-            const cacheMensagens = await message.channel.messages.fetch({ limit: 20 });
+            // Busca histórico incluindo mensagens de todos (inclusive bots)
+            const cacheMensagens = await message.channel.messages.fetch({ limit: 30 });
             const historico = cacheMensagens
-                .filter(msg => !msg.author.bot)
                 .reverse()
                 .map(msg => `${msg.author.username}: ${msg.content}`)
                 .join('\n');
@@ -61,10 +57,9 @@ client.on('messageCreate', async (message) => {
             await message.reply(response.text());
         } catch (error) {
             console.error("[ERRO NA IA]", error);
-            await message.reply("Houve uma interferência mística... tente novamente.");
+            await message.reply("Deu erro aqui, tenta de novo.");
         }
     }
 });
 
-// Conecta o bot com a chave do Discord
 client.login(process.env.DISCORD_TOKEN);
