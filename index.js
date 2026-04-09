@@ -5,7 +5,7 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 const model = genAI.getGenerativeModel({ 
-    model: "gemini-2.5-flash",
+    model: "gemini-2.0-flash-lite",
     systemInstruction: `Você é a Zyra, a IA deste servidor do Discord, criada pelo HaazR, também conhecido como Lucas.
 Fale de forma direta, curta e descontraída, como alguém do grupo. Use humor natural, sem ser dramática.
 Sem metáforas exageradas, sem "explorador(a)", sem frases longas e pomposas.
