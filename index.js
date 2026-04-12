@@ -107,23 +107,19 @@ client.on('messageCreate', async (message) => {
 
     if (pediuLimpar) {
         const temCargo = CARGOS_ADMIN.some(id => message.member.roles.cache.has(id));
-        console.log('[LIMPAR] temCargo:', temCargo, '| cargos do user:', [...message.member.roles.cache.keys()]);
 
         if (!temCargo) {
             return message.reply('ah não mano kkk, isso aí é só pra admin 😑');
         }
 
         try {
-            console.log('[LIMPAR] buscando mensagens...');
             const mensagens = await message.channel.messages.fetch({ limit: 100 });
-            console.log('[LIMPAR] mensagens encontradas:', mensagens.size);
             await message.channel.bulkDelete(mensagens, true);
-            console.log('[LIMPAR] bulkDelete executado!');
             const aviso = await message.channel.send('chat limpo 🧹');
             setTimeout(() => aviso.delete(), 3000);
         } catch (err) {
-            console.error('[ERRO LIMPAR]', err.message, err.code);
-            return message.channel.send('deu ruim 😅: ' + err.message);
+            console.error('[ERRO LIMPAR]', err.message);
+            await message.channel.send('deu ruim, mensagens com mais de 14 dias não consigo apagar 😅');
         }
 
         return;
@@ -140,7 +136,7 @@ client.on('messageCreate', async (message) => {
         const pergunta = message.content.replace(/<@(!?)\d+>/g, '').trim();
 
         if (!pergunta) {
-            return message.reply("fala aí, manda a dúvida 😏");
+            return message.channel.send("fala aí, manda a dúvida 😏");
         }
 
         const cacheMensagens = await message.channel.messages.fetch({ limit: 30 });
@@ -157,8 +153,8 @@ client.on('messageCreate', async (message) => {
         await message.reply(text);
 
     } catch (error) {
-        console.error("[ERRO NA IA]", error);
-        await message.reply("deu uma bugada aqui... tenta de novo aí 😅");
+        console.error("[ERRO NA IA]", error.message);
+        await message.channel.send("deu uma bugada aqui... tenta de novo aí 😅");
     }
 });
 
