@@ -1,3 +1,4 @@
+try { require('dotenv').config(); } catch (e) {} // local only, ignored on Render
 const express = require('express');
 const { Client, GatewayIntentBits } = require('discord.js');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
