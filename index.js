@@ -91,6 +91,8 @@ client.on('messageCreate', async (message) => {
 });
 
 console.log("[DEBUG] TOKEN:", process.env.DISCORD_TOKEN ? "CARREGADO" : "UNDEFINED");
-client.login(process.env.DISCORD_TOKEN);
+client.login(process.env.DISCORD_TOKEN)
+  .then(() => console.log("[DEBUG] Login no Discord OK"))
+  .catch(err => console.error("[DEBUG] Falha no login:", err.message));
 
 client.login(process.env.DISCORD_TOKEN);
