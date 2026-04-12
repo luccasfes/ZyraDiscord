@@ -89,33 +89,31 @@ client.on('messageCreate', async (message) => {
     // =========================
     // 🧹 COMANDO +LIMPAR (ADMIN)
     // =========================
-    if (message.content.startsWith('+limpar')) {
+   if (message.content.startsWith('+limpar')) {
 
-        // Verifica permissão ADMIN
-        if (!message.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
-            return message.reply('ah não mano kkk, isso aí é só pra admin 😑');
-        }
-
-        const args = message.content.split(' ');
-        const quantidade = parseInt(args[1]);
-
-        if (!quantidade || quantidade < 1 || quantidade > 100) {
-            return message.reply('usa assim: +limpar 10 (máx 100)');
-        }
-
-        try {
-            await message.channel.bulkDelete(quantidade, true);
-
-            const msg = await message.channel.send(`🧹 limpei ${quantidade} msgs`);
-            setTimeout(() => msg.delete().catch(() => {}), 3000);
-
-        } catch (err) {
-            console.error(err);
-            message.reply('deu ruim pra limpar 😅');
-        }
-
-        return;
+    // Verifica se é admin
+    if (!message.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
+        return message.reply('ah não mano kkk, isso aí é só pra admin 😑');
     }
+
+    const args = message.content.split(' ');
+    const quantidade = parseInt(args[1]);
+
+    if (!quantidade || quantidade < 1 || quantidade > 100) {
+        return message.reply('usa assim: +limpar 10');
+    }
+
+    try {
+        // Zyra manda o comando pra Loritta executar
+        await message.channel.send(`+limpar ${quantidade}`);
+
+    } catch (err) {
+        console.error(err);
+        message.reply('deu ruim pra mandar o comando 😅');
+    }
+
+    return;
+}
 
     // =========================
     // 🤖 RESPOSTA DA ZYRA
