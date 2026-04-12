@@ -107,19 +107,23 @@ client.on('messageCreate', async (message) => {
 
     if (pediuLimpar) {
         const temCargo = CARGOS_ADMIN.some(id => message.member.roles.cache.has(id));
+        console.log('[LIMPAR] temCargo:', temCargo, '| cargos do user:', [...message.member.roles.cache.keys()]);
 
         if (!temCargo) {
             return message.reply('ah não mano kkk, isso aí é só pra admin 😑');
         }
 
         try {
+            console.log('[LIMPAR] buscando mensagens...');
             const mensagens = await message.channel.messages.fetch({ limit: 100 });
+            console.log('[LIMPAR] mensagens encontradas:', mensagens.size);
             await message.channel.bulkDelete(mensagens, true);
+            console.log('[LIMPAR] bulkDelete executado!');
             const aviso = await message.channel.send('chat limpo 🧹');
             setTimeout(() => aviso.delete(), 3000);
         } catch (err) {
-            console.error(err);
-            return message.channel.send('deu ruim, mensagens com mais de 14 dias não consigo apagar 😅');
+            console.error('[ERRO LIMPAR]', err.message, err.code);
+            return message.channel.send('deu ruim 😅: ' + err.message);
         }
 
         return;
