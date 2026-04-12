@@ -105,7 +105,7 @@ if (message.mentions.users.has(client.user.id) && pediuLimpar) {
     }
 
     try {
-        await message.channel.send('+limpar 20'); // pode ajustar quantidade
+        await message.channel.send('+limpar 100'); // pode ajustar quantidade
 
         return message.reply('relaxa, já chamei quem faz o serviço sujo 😏');
     } catch (err) {
