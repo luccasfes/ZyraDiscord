@@ -90,4 +90,7 @@ client.on('messageCreate', async (message) => {
     }
 });
 
+console.log("[DEBUG] TOKEN:", process.env.DISCORD_TOKEN ? "CARREGADO" : "UNDEFINED");
+client.login(process.env.DISCORD_TOKEN);
+
 client.login(process.env.DISCORD_TOKEN);
