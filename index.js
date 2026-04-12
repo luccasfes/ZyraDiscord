@@ -87,32 +87,31 @@ client.on('messageCreate', async (message) => {
     if (message.author.bot) return;
 
     // =========================
-    // 🧹 COMANDO +LIMPAR (ADMIN)
-    // =========================
-   if (message.content.startsWith('+limpar')) {
+// 🧹 COMANDO NATURAL (LIMPAR CHAT)
+// =========================
+const mensagem = message.content.toLowerCase();
 
-    // Verifica se é admin
+const pediuLimpar =
+    mensagem.includes('limpa o chat') ||
+    mensagem.includes('limpar o chat') ||
+    mensagem.includes('apaga o chat') ||
+    mensagem.includes('apagar o chat');
+
+if (message.mentions.users.has(client.user.id) && pediuLimpar) {
+
+    // verifica admin
     if (!message.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
         return message.reply('ah não mano kkk, isso aí é só pra admin 😑');
     }
 
-    const args = message.content.split(' ');
-    const quantidade = parseInt(args[1]);
-
-    if (!quantidade || quantidade < 1 || quantidade > 100) {
-        return message.reply('usa assim: +limpar 10');
-    }
-
     try {
-        // Zyra manda o comando pra Loritta executar
-        await message.channel.send(`+limpar ${quantidade}`);
+        await message.channel.send('+limpar 20'); // pode ajustar quantidade
 
+        return message.reply('relaxa, já chamei quem faz o serviço sujo 😏');
     } catch (err) {
         console.error(err);
-        message.reply('deu ruim pra mandar o comando 😅');
+        return message.reply('deu ruim aqui 😅');
     }
-
-    return;
 }
 
     // =========================
