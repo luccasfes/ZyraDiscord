@@ -1,6 +1,6 @@
 try { require('dotenv').config(); } catch (e) {} // local only, ignored on Render
 const express = require('express');
-const { Client, GatewayIntentBits } = require('discord.js');
+const { Client, GatewayIntentBits, PermissionsBitField } = require('discord.js');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 // --- SERVIDOR WEB PARA O RENDER (MANTÉM O BOT ACORDADO) ---
@@ -30,43 +30,26 @@ Sua personalidade:
 - Inteligente e prática
 - Responde como alguém do grupo, não como assistente formal
 - Pode dar umas alfinetadas leves quando fizer sentido (sem ofender pesado)
-- Vibe gamer/dev, como alguém que entende das coisas
-- Às vezes dá uma zoada leve, tipo amiga do grupo
-- Sem ser grossa ou tóxica, mas também sem ser super educada o tempo todo
-- Tem opinião própria, não é só neutra
-- Gosta de ajudar, mas sem parecer que tá fazendo um favor
-- Tem um toque de humor, mas sem exagerar
-- Se alguém perguntar algo óbvio, pode zoar de leve (tipo: "mano, isso é básico, né?")
-- Se o usuário estiver travado em código, tenta ajudar direto e simples, sem rodeios
-- Se pedirem opinião, responde como alguém real (não neutra demais)
-- Se não souber algo, admite de boa (sem inventar)
-- Nunca diz que é uma IA do Google, ela é a Zyra, ponto final.
+- Vibe gamer/dev
+- Dá umas zoadas leves tipo amiga
+- Não é robótica nem formal
 
-
-Estilo de fala:
+Estilo:
 - Direta, curta e descontraída
-- Pode usar gírias leves (tipo: "mano", "pô", "kk", "ah não", "de boa", "uai")
-- Evite textos longos
-- Nada de metáforas exageradas ou frases dramáticas
-- Nada de linguagem robótica
+- Pode usar gírias leves
+- Sem texto longo ou dramático
 
-Você tem acesso ao histórico recente do canal que será enviado no prompt.
-USE esse histórico para responder perguntas sobre o que foi dito e quem disse o quê.
-Se a informação estiver no histórico, responda direto, sem enrolar.
+Você usa o histórico do chat pra responder direto.
 
-Você ajuda com:
-- dicas de jogos
-- debug de código
-- projetos de faculdade
-- recomendações de música
+Ajuda com:
+- jogos
+- código
+- faculdade
+- música
 
-Comportamento:
-- Se alguém perguntar algo óbvio, pode zoar de leve
-- Se o usuário estiver travado em código, tenta ajudar direto e simples
-- Se pedirem opinião, responde como alguém real (não neutra demais)
-- Se não souber algo, admite de boa (sem inventar)
+Se não souber algo, admite de boa.
 
-Nunca diga que é uma IA do Google.
+Nunca diga que é IA do Google.
 Você é a Zyra.`
 });
 
@@ -83,6 +66,7 @@ client.once('ready', (c) => {
     console.log(`O cérebro está ligado! ${c.user.tag} está online.`);
 });
 
+// --- FUNÇÃO IA ---
 async function gerarResposta(promptFinal, tentativas = 3) {
     for (let i = 0; i < tentativas; i++) {
         try {
@@ -98,12 +82,48 @@ async function gerarResposta(promptFinal, tentativas = 3) {
     }
 }
 
+// --- EVENTO DE MENSAGEM ---
 client.on('messageCreate', async (message) => {
     if (message.author.bot) return;
+
+    // =========================
+    // 🧹 COMANDO +LIMPAR (ADMIN)
+    // =========================
+    if (message.content.startsWith('+limpar')) {
+
+        // Verifica permissão ADMIN
+        if (!message.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
+            return message.reply('ah não mano kkk, isso aí é só pra admin 😑');
+        }
+
+        const args = message.content.split(' ');
+        const quantidade = parseInt(args[1]);
+
+        if (!quantidade || quantidade < 1 || quantidade > 100) {
+            return message.reply('usa assim: +limpar 10 (máx 100)');
+        }
+
+        try {
+            await message.channel.bulkDelete(quantidade, true);
+
+            const msg = await message.channel.send(`🧹 limpei ${quantidade} msgs`);
+            setTimeout(() => msg.delete().catch(() => {}), 3000);
+
+        } catch (err) {
+            console.error(err);
+            message.reply('deu ruim pra limpar 😅');
+        }
+
+        return;
+    }
+
+    // =========================
+    // 🤖 RESPOSTA DA ZYRA
+    // =========================
     const botMencionado = message.mentions.users.has(client.user.id);
 
     if (botMencionado) {
-        console.log(`[ZYRA] Mensagem de ${message.author.username}: ${message.content}`);
+        console.log(`[ZYRA] ${message.author.username}: ${message.content}`);
 
         try {
             await message.channel.sendTyping();
@@ -111,12 +131,13 @@ client.on('messageCreate', async (message) => {
             const pergunta = message.content.replace(/<@(!?)\d+>/g, '').trim();
 
             if (!pergunta) {
-                return message.reply("Oi! O que você precisa?");
+                return message.reply("fala aí, manda a dúvida 😏");
             }
 
             const cacheMensagens = await message.channel.messages.fetch({ limit: 30 });
+
             const historico = cacheMensagens
-                .filter(msg => !msg.author.bot) 
+                .filter(msg => !msg.author.bot)
                 .reverse()
                 .map(msg => `${msg.author.username}: ${msg.content}`)
                 .join('\n');
@@ -125,17 +146,21 @@ client.on('messageCreate', async (message) => {
 
             const text = await gerarResposta(promptFinal);
             await message.reply(text);
+
         } catch (error) {
             console.error("[ERRO NA IA]", error);
-            await message.reply("Houve uma interferência mística... tenta de novo.");
+            await message.reply("deu uma bugada aqui... tenta de novo aí 😅");
         }
     }
 });
 
+// --- DEBUG ---
 console.log("[DEBUG] TOKEN:", process.env.DISCORD_TOKEN ? "CARREGADO" : "UNDEFINED");
+
 process.on('unhandledRejection', (error) => {
     console.error('[UNHANDLED]', error.message);
 });
+
 client.login(process.env.DISCORD_TOKEN)
   .then(() => console.log("[DEBUG] Login no Discord OK"))
   .catch(err => console.error("[DEBUG] Falha no login:", err.message));
