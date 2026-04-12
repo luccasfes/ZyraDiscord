@@ -99,19 +99,11 @@ const pediuLimpar =
 
 if (message.mentions.users.has(client.user.id) && pediuLimpar) {
 
-    // verifica admin
     if (!message.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
         return message.reply('ah não mano kkk, isso aí é só pra admin 😑');
     }
 
-    try {
-        await message.channel.send('+limpar 100'); // pode ajustar quantidade
-
-        return message.reply('relaxa, já chamei quem faz o serviço sujo 😏');
-    } catch (err) {
-        console.error(err);
-        return message.reply('deu ruim aqui 😅');
-    }
+    return message.channel.send('+limpar 100');
 }
 
     // =========================
