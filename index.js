@@ -1,4 +1,3 @@
-require('dotenv').config(); // Sempre no topo!
 const express = require('express');
 const { Client, GatewayIntentBits } = require('discord.js');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
