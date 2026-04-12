@@ -1,6 +1,6 @@
 try { require('dotenv').config(); } catch (e) {} // local only, ignored on Render
 const express = require('express');
-const { Client, GatewayIntentBits, PermissionsBitField } = require('discord.js');
+const { Client, GatewayIntentBits } = require('discord.js');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 // --- SERVIDOR WEB PARA O RENDER (MANTÉM O BOT ACORDADO) ---
@@ -82,64 +82,79 @@ async function gerarResposta(promptFinal, tentativas = 3) {
     }
 }
 
+// IDs de cargo autorizados
+const CARGOS_ADMIN = ['1212053641406578738', '1491662032062255235'];
+
 // --- EVENTO DE MENSAGEM ---
 client.on('messageCreate', async (message) => {
     if (message.author.bot) return;
 
+    const botMencionado = message.mentions.users.has(client.user.id);
+    if (!botMencionado) return;
+
+    const conteudo = message.content.toLowerCase();
+
     // =========================
-// 🧹 COMANDO NATURAL (LIMPAR CHAT)
-// =========================
-const mensagem = message.content.toLowerCase();
+    // 🧹 COMANDO NATURAL (LIMPAR CHAT)
+    // =========================
+    const pediuLimpar =
+        conteudo.includes('limpa o chat') ||
+        conteudo.includes('limpar o chat') ||
+        conteudo.includes('apaga o chat') ||
+        conteudo.includes('apagar o chat') ||
+        conteudo.includes('limpar chat') ||
+        conteudo.includes('limpa chat');
 
-const pediuLimpar =
-    mensagem.includes('limpa o chat') ||
-    mensagem.includes('limpar o chat') ||
-    mensagem.includes('apaga o chat') ||
-    mensagem.includes('apagar o chat');
+    if (pediuLimpar) {
+        const temCargo = CARGOS_ADMIN.some(id => message.member.roles.cache.has(id));
 
-if (message.mentions.users.has(client.user.id) && pediuLimpar) {
+        if (!temCargo) {
+            return message.reply('ah não mano kkk, isso aí é só pra admin 😑');
+        }
 
-    if (!message.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
-        return message.reply('ah não mano kkk, isso aí é só pra admin 😑');
+        try {
+            const mensagens = await message.channel.messages.fetch({ limit: 100 });
+            await message.channel.bulkDelete(mensagens, true);
+            const aviso = await message.channel.send('chat limpo 🧹');
+            setTimeout(() => aviso.delete(), 3000);
+        } catch (err) {
+            console.error(err);
+            return message.channel.send('deu ruim, mensagens com mais de 14 dias não consigo apagar 😅');
+        }
+
+        return;
     }
-
-    return message.channel.send('+limpar 100');
-}
 
     // =========================
     // 🤖 RESPOSTA DA ZYRA
     // =========================
-    const botMencionado = message.mentions.users.has(client.user.id);
+    console.log(`[ZYRA] ${message.author.username}: ${message.content}`);
 
-    if (botMencionado) {
-        console.log(`[ZYRA] ${message.author.username}: ${message.content}`);
+    try {
+        await message.channel.sendTyping();
 
-        try {
-            await message.channel.sendTyping();
+        const pergunta = message.content.replace(/<@(!?)\d+>/g, '').trim();
 
-            const pergunta = message.content.replace(/<@(!?)\d+>/g, '').trim();
-
-            if (!pergunta) {
-                return message.reply("fala aí, manda a dúvida 😏");
-            }
-
-            const cacheMensagens = await message.channel.messages.fetch({ limit: 30 });
-
-            const historico = cacheMensagens
-                .filter(msg => !msg.author.bot)
-                .reverse()
-                .map(msg => `${msg.author.username}: ${msg.content}`)
-                .join('\n');
-
-            const promptFinal = `Histórico recente do canal:\n${historico}\n\nPergunta de ${message.author.username}: ${pergunta}`;
-
-            const text = await gerarResposta(promptFinal);
-            await message.reply(text);
-
-        } catch (error) {
-            console.error("[ERRO NA IA]", error);
-            await message.reply("deu uma bugada aqui... tenta de novo aí 😅");
+        if (!pergunta) {
+            return message.reply("fala aí, manda a dúvida 😏");
         }
+
+        const cacheMensagens = await message.channel.messages.fetch({ limit: 30 });
+
+        const historico = cacheMensagens
+            .filter(msg => !msg.author.bot)
+            .reverse()
+            .map(msg => `${msg.author.username}: ${msg.content}`)
+            .join('\n');
+
+        const promptFinal = `Histórico recente do canal:\n${historico}\n\nPergunta de ${message.author.username}: ${pergunta}`;
+
+        const text = await gerarResposta(promptFinal);
+        await message.reply(text);
+
+    } catch (error) {
+        console.error("[ERRO NA IA]", error);
+        await message.reply("deu uma bugada aqui... tenta de novo aí 😅");
     }
 });
 
